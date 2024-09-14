@@ -1,0 +1,3 @@
+[submodule "donkeycar"]
+	path = donkeycar
+	url = https://github.com/autorope/donkeycar.git
