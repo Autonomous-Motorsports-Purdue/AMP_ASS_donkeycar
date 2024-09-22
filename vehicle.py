@@ -1,13 +1,16 @@
-import time
-import numpy as np
 import logging
-from threading import Thread
-from donkeycar import Vehicle
+from donkeycar.vehicle import Vehicle
 
 logger = logging.getLogger(__name__)
 
-class Vehicle(Vehicle):
-    pass
+class MyVehicle(Vehicle):
+    def __init__(self):
+        super().__init__()
+    
+    ## Removed option for threading
+    def add(self, part, inputs = [], outputs = [], run_condition = None):
+        super().add(part, inputs, outputs, False, run_condition)
+    
     
 
      
