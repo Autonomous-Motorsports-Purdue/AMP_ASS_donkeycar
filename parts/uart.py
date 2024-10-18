@@ -57,13 +57,16 @@ class UART_Driver:
         # send end byte
         self.ser.write(END_BYTE.to_bytes(1, "little"))
 
-    def run(self, v, s):
+    def run(self, v, s, alive):
         """
         Donkeycar compatible run function
         DOnkeycar gives (-1, 1) for steering and (-1, 1) for throttle
         """
-        v = int(v * 127) # throttle from -127 to 127
-        
+        if not alive:
+            self.reset_kart()
+            return
+        v = int(v * 127)  # throttle from -127 to 127
+
         # steering is centered at 128
         s = int(s * 127)
 
@@ -80,4 +83,3 @@ class UART_Driver:
         self.reset_kart()
         time.sleep(0.1)
         self.ser.close()
-
