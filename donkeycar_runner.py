@@ -5,12 +5,13 @@ import time
 from parts.health_check import HealthCheck
 from parts.uart import UART_Driver
 from constants import DRIVE_LOOP_HZ
+from parts.uart_backup import UART_backup_driver
 
 if __name__ == "__main__":
     # web controller
     V = dk.vehicle.Vehicle()
     health_check = HealthCheck("localhost", 6000)
-    V.add(health_check, inputs=None, outputs=["critical/health_check"])
+    V.add(health_check, inputs=[], outputs=["critical/health_check"])
 
     controller = LocalWebController()
     # web controller just expects all these things even though they don't exist
@@ -28,7 +29,7 @@ if __name__ == "__main__":
     )
 
     # uart controller
-    uart = UART_Driver("/dev/ttys011")
+    uart = UART_backup_driver("/dev/tty.usbmodem103")
     V.add(
         uart,
         inputs=["user/throttle", "user/steering", "critical/health_check"],
