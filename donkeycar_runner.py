@@ -4,19 +4,27 @@ from donkeycar.parts.controller import LocalWebController
 import time
 from parts.health_check import HealthCheck
 from parts.uart import UART_Driver
+from parts.uart_backup import UART_backup_driver
 from constants import DRIVE_LOOP_HZ
+from parts.logger import Logger
+from parts.frame_publisher import Frame_Publisher
+from parts.lane_detect import LaneDetect
+
 
 if __name__ == "__main__":
     # web controller
     V = dk.vehicle.Vehicle()
-    health_check = HealthCheck("localhost", 6000)
-    V.add(health_check, inputs=None, outputs=["critical/health_check"])
-
+    health_check = HealthCheck("192.168.1.100", 6000)
+    V.add(health_check, inputs=[], outputs=["critical/health_check"])
+    V.add(Frame_Publisher(), outputs=['left', 'right'], threaded=False)
+    V.add(LaneDetect(), inputs=['left', ' ', ' '], outputs=['points', 'overlay'], threaded=False)
+    V.add(Logger(), inputs=['left', 'right', 'points'], threaded=False)
+    
     controller = LocalWebController()
     # web controller just expects all these things even though they don't exist
     V.add(
         controller,
-        inputs=["cam/image_array", "tub/num_records", "user/mode", "recording"],
+        inputs=["overlay", "tub/num_records", "user/mode", "recording"],
         outputs=[
             "user/steering",
             "user/throttle",
@@ -28,7 +36,7 @@ if __name__ == "__main__":
     )
 
     # uart controller
-    uart = UART_Driver("/dev/ttys011")
+    uart = UART_backup_driver("/dev/ttyACM0")
     V.add(
         uart,
         inputs=["user/throttle", "user/steering", "critical/health_check"],
