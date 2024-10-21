@@ -6,10 +6,14 @@ from parts.health_check import HealthCheck
 from parts.uart import UART_Driver
 from parts.uart_backup import UART_backup_driver
 from constants import DRIVE_LOOP_HZ
+<<<<<<< HEAD
 from parts.logger import Logger
 from parts.frame_publisher import Frame_Publisher
 from parts.lane_detect import LaneDetect
 
+=======
+from parts.uart_backup import UART_backup_driver
+>>>>>>> 716b13a5bd616ae0c56dac041a8fd976b53cd3ca
 
 if __name__ == "__main__":
     # web controller
@@ -36,7 +40,11 @@ if __name__ == "__main__":
     )
 
     # uart controller
+<<<<<<< HEAD
     uart = UART_backup_driver("/dev/ttyACM0")
+=======
+    uart = UART_backup_driver("/dev/tty.usbmodem103")
+>>>>>>> 716b13a5bd616ae0c56dac041a8fd976b53cd3ca
     V.add(
         uart,
         inputs=["user/throttle", "user/steering", "critical/health_check"],

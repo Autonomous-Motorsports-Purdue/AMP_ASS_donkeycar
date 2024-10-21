@@ -14,7 +14,7 @@ class HealthCheck:
 
     def run(self):
         try:
-            self.clientSocket.sendall("AMP_ALIVE".encode("ascii"))
+            self.clientSocket.sendall("AMP_ALIVE\n".encode("ascii"))
             self.clientSocket.settimeout(1 / DRIVE_LOOP_HZ)
             res = self.clientSocket.recv(1024).decode()
             if res == "AMP_ALIVE":
