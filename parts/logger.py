@@ -15,7 +15,7 @@ class Logger():
             # os.makedirs(self.depth_directory)
 
     def run(self, image, depth, points):
-        if image is not None and points.size != 0:
+        if image is not None and points is not None and points.size != 0:
             image_file = self.image_directory + "/" + datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S.%f') + ".jpg"
             point_file = self.point_directory + "/" + datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S.%f') + ".t"
 

@@ -6,14 +6,9 @@ from parts.health_check import HealthCheck
 from parts.uart import UART_Driver
 from parts.uart_backup import UART_backup_driver
 from constants import DRIVE_LOOP_HZ
-<<<<<<< HEAD
 from parts.logger import Logger
 from parts.frame_publisher import Frame_Publisher
-from parts.lane_detect import LaneDetect
-
-=======
-from parts.uart_backup import UART_backup_driver
->>>>>>> 716b13a5bd616ae0c56dac041a8fd976b53cd3ca
+from parts.segment_model import Segment_Model
 
 if __name__ == "__main__":
     # web controller
@@ -21,7 +16,8 @@ if __name__ == "__main__":
     health_check = HealthCheck("192.168.1.100", 6000)
     V.add(health_check, inputs=[], outputs=["critical/health_check"])
     V.add(Frame_Publisher(), outputs=['left', 'right'], threaded=False)
-    V.add(LaneDetect(), inputs=['left', ' ', ' '], outputs=['points', 'overlay'], threaded=False)
+    V.add(Segment_Model(), inputs=['left'], outputs=['overlay', 'user/steering', 'user/throttle'])
+    #V.add(LaneDetect(), inputs=['left', ' ', ' '], outputs=['points', 'overlay'], threaded=False)
     V.add(Logger(), inputs=['left', 'right', 'points'], threaded=False)
     
     controller = LocalWebController()
@@ -30,8 +26,8 @@ if __name__ == "__main__":
         controller,
         inputs=["overlay", "tub/num_records", "user/mode", "recording"],
         outputs=[
-            "user/steering",
-            "user/throttle",
+            "user/steering_fake",
+            "user/throttle_fake",
             "user/mode",
             "recording",
             "web/buttons",
@@ -40,11 +36,7 @@ if __name__ == "__main__":
     )
 
     # uart controller
-<<<<<<< HEAD
     uart = UART_backup_driver("/dev/ttyACM0")
-=======
-    uart = UART_backup_driver("/dev/tty.usbmodem103")
->>>>>>> 716b13a5bd616ae0c56dac041a8fd976b53cd3ca
     V.add(
         uart,
         inputs=["user/throttle", "user/steering", "critical/health_check"],
