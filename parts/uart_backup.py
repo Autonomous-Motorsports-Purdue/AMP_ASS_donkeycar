@@ -60,7 +60,7 @@ class UART_backup_driver:
         s = int(s * 127)
 
         # clip throttle to (-100, 100)
-        v = max(-100, min(100, v))
+        v = max(-200, min(200, v))
 
         print(f"Throttle: {v}, Steering: {s}")
 

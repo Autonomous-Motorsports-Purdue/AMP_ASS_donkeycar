@@ -55,6 +55,7 @@ class Segment_Model():
             contours, _ = cv2.findContours(img_bin, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
             scaled_offset_x = 0
             throttle = 0
+            contour_center_x = contour_center_y = 0 
             if len(contours) >= 1:
                 # Find the largest contour by area
                 largest_contour = max(contours, key=cv2.contourArea)
@@ -85,10 +86,10 @@ class Segment_Model():
                 bounding_center_y = y + h / 2
                 offset_x = contour_center_x - image_center_x
                 scaled_offset_x = 2 * (offset_x / width)
-                if abs(scaled_offset_x) >= 0.7:
+                if abs(scaled_offset_x) >= 0.08:
                     throttle = 0.30
                 else:
-                    throttle = 0.43
+                    throttle = 0.57
                 self.pid.setpoint = scaled_offset_x
                 print(f"Bounding box center X: {bounding_center_x}")
                 print(f"Contour center X: {contour_center_x}")
@@ -99,4 +100,4 @@ class Segment_Model():
 
 
             
-            return img_rs, self.pid(self.prev_steer), throttle
+            return img_rs, (contour_center_x,contour_center_y),self.pid(self.prev_steer), throttle

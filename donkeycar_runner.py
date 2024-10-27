@@ -16,9 +16,9 @@ if __name__ == "__main__":
     health_check = HealthCheck("192.168.1.100", 6000)
     V.add(health_check, inputs=[], outputs=["critical/health_check"])
     V.add(Frame_Publisher(), outputs=['left', 'right'], threaded=False)
-    V.add(Segment_Model(), inputs=['left'], outputs=['overlay', 'user/steering', 'user/throttle'])
+    V.add(Segment_Model(), inputs=['left'], outputs=['overlay', 'centroid','user/steering', 'user/throttle'])
     #V.add(LaneDetect(), inputs=['left', ' ', ' '], outputs=['points', 'overlay'], threaded=False)
-    V.add(Logger(), inputs=['left', 'right', 'points'], threaded=False)
+    V.add(Logger(), inputs=['left', 'overlay', 'centroid', 'user/steering', 'user/throttle'], threaded=False)
     
     controller = LocalWebController()
     # web controller just expects all these things even though they don't exist
