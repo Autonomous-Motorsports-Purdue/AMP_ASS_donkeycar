@@ -13,7 +13,7 @@ from parts.segment_model import Segment_Model
 if __name__ == "__main__":
     # web controller
     V = dk.vehicle.Vehicle()
-    health_check = HealthCheck("192.168.1.100", 6000)
+    health_check = HealthCheck("192.168.1.100", 6000) # aryamaan has ip 100
     V.add(health_check, inputs=[], outputs=["critical/health_check"])
     V.add(Frame_Publisher(), outputs=['left', 'right'], threaded=False)
     V.add(Segment_Model(), inputs=['left'], outputs=['overlay', 'centroid','user/steering', 'user/throttle'])

@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import onnxruntime as rt
 from simple_pid import PID
+import math
 
 K_P = 2
 K_I = 0.1
@@ -10,7 +11,7 @@ K_D = 0
 class Segment_Model():
         def __init__(self):
             self.sess = rt.InferenceSession( "q_model.onnx", providers=[('CUDAExecutionProvider', {"cudnn_conv_algo_search": "DEFAULT"})])
-            self.pid = PID(1.8, 0, 0, setpoint=0)
+            self.pid = PID(1.6, 0.00, 0, setpoint=0)
             self.prev_steer = 0
             print('model loaded')
 
@@ -86,10 +87,10 @@ class Segment_Model():
                 bounding_center_y = y + h / 2
                 offset_x = contour_center_x - image_center_x
                 scaled_offset_x = 2 * (offset_x / width)
-                if abs(scaled_offset_x) >= 0.08:
-                    throttle = 0.30
-                else:
-                    throttle = 0.57
+                if abs(scaled_offset_x) <= 0.06:
+                    throttle = 0.53
+                elif abs(scaled_offset_x) >= 0.06:
+                    throttle=-0.0599*math.log(0.0211*abs(scaled_offset_x))
                 self.pid.setpoint = scaled_offset_x
                 print(f"Bounding box center X: {bounding_center_x}")
                 print(f"Contour center X: {contour_center_x}")
