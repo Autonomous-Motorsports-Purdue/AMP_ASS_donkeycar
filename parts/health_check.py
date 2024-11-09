@@ -13,6 +13,9 @@ class HealthCheck:
         self.clientSocket.connect((host_ip, host_port))
 
     def run(self):
+        """
+        Determine if there is a still a connection between the kart and the host
+        """
         try:
             self.clientSocket.sendall("AMP_ALIVE\n".encode("ascii"))
             self.clientSocket.settimeout(0.1)

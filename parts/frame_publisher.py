@@ -29,6 +29,9 @@ class Frame_Publisher():
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         self.frame = None
     def run(self):
+        """
+        Read in and return the current left and right frames from the ZED.
+        """
         ret, self.frame = self.cap.read()   
         # cv2.imshow("test", self.frame)
         if self.frame is not None:

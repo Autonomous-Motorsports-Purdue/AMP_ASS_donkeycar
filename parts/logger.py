@@ -17,16 +17,20 @@ class Logger():
         if not os.path.exists(self.information_directory):
             os.makedirs(self.information_directory)
         self.info_csv = "data/information/" + start_time + ".csv"
-        # writing to csv file
+        # Writing to csv file
         self.csvfile = open(self.info_csv, 'w') 
-        # creating a csv writer object
+        # Creating a csv writer object
         self.csvwriter = csv.writer(self.csvfile)
 
         fields = ['timestamp', 'image', 'segmented', 'centroid', 'steering', 'throttle']
-        # writing the fields
+        # Writing the fields
         self.csvwriter.writerow(fields)
         
     def run(self, image, segmentedImage, centroid, steering, throttle):
+        """
+        Logs the current image, segmented Image, centroid, steering, and throttle values.
+        Saves the images in their respective directory and logs the image paths and other data into a CSV.
+        """
         if image is not None and segmentedImage is not None:
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S.%f')
             image_file = self.image_directory +"/"+ timestamp + ".jpg"
