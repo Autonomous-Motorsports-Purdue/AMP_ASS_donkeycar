@@ -15,7 +15,7 @@ class Segment_Model():
         def run(self,img):
             """
             Run segmentation model on the inputted image and calculate steering and throttle values based on the centroid in the detected track.
-            Uses the PID to keep the centroid in the center of the image, which keeps the kart in the center of the track.
+            Uses the PID to follow the centroid of the track
 
             Args:
                 img (numpy.ndarray): Inputted image from frame publisher

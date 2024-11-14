@@ -13,18 +13,18 @@ from parts.segment_model import Segment_Model
 if __name__ == "__main__":
     # web controller
     V = dk.vehicle.Vehicle()
-    health_check = HealthCheck("192.168.1.100", 6000) # aryamaan has ip 100
-    V.add(health_check, inputs=[], outputs=["critical/health_check"])
-    V.add(Frame_Publisher(), outputs=['left', 'right'], threaded=False)
-    V.add(Segment_Model(), inputs=['left'], outputs=['overlay', 'centroid','user/steering', 'user/throttle'])
-    #V.add(LaneDetect(), inputs=['left', ' ', ' '], outputs=['points', 'overlay'], threaded=False)
-    V.add(Logger(), inputs=['left', 'overlay', 'centroid', 'user/steering', 'user/throttle'], threaded=False)
+    heartbeat= HealthCheck("192.168.1.100", 6000) # aryamaan has ip 100
+    V.add(heartbeat, inputs=[], outputs=["safety/heartbeat"])
+    V.add(Frame_Publisher(), outputs=['sensors/ZED/RGB/left', 'sensors/ZED/RGB/right'], threaded=False)
+    V.add(Segment_Model(), inputs=['sensors/ZED/RGB/left'], outputs=['perception/segmentedTrack', 'centroid','controls/steering', 'controls/throttle'])
+    #V.add(LaneDetect(), inputs=['sensors/ZED/RGB/left', ' ', ' '], outputs=['points', 'perception/segmentedTrack'], threaded=False)
+    V.add(Logger(), inputs=['sensors/ZED/RGB/left', 'perception/segmentedTrack', 'centroid', 'controls/steering', 'controls/throttle'], threaded=False)
     
     controller = LocalWebController()
     # web controller just expects all these things even though they don't exist
     V.add(
         controller,
-        inputs=["overlay", "tub/num_records", "user/mode", "recording"],
+        inputs=["perception/segmentedTrack", "tub/num_records", "user/mode", "recording"],
         outputs=[
             "user/steering_fake",
             "user/throttle_fake",
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     uart = UART_backup_driver("/dev/ttyACM0")
     V.add(
         uart,
-        inputs=["user/throttle", "user/steering", "critical/health_check"],
+        inputs=["controls/throttle", "controls/steering", "safety/heartbeat"],
         outputs=[],
         threaded=False,
     )
