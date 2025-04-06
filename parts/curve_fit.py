@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 from math import factorial
+from scipy.spatial import KDTree
 
 class Curve_fit():
     def __init__(self):
@@ -133,17 +134,37 @@ class Curve_fit():
         cv2.drawContours(mask, [rect], -1, (255), -1)
         img = cv2.bitwise_and(img, mask)
 
-
-        mask = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel5, iterations = 15)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel5, iterations = 2)
+        mask = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel3, iterations = 3)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel3, iterations = 3)
         mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel3, iterations = 2)
 
         img = cv2.bitwise_and(img, mask)
 
         inverse = cv2.bitwise_not(img)
-        sobelLeft = cv2.Sobel(img, cv2.CV_8UC1, 1, 0, ksize=3)
-        sobelRight = cv2.Sobel(inverse, cv2.CV_8UC1, 1, 0, ksize=3)
+        sobelLeft = cv2.Sobel(img, cv2.CV_8UC1, 1, 0, ksize=5)
 
+        radius = 30
+        min_neighbors = 30
+        
+        rows, cols = np.nonzero(sobelLeft) #Use scipy to get rid of outliers
+        points = np.column_stack((rows, cols))
+        tree = KDTree(points)
+        neighbor_counts = tree.query_ball_point(points, radius)
+        inlier_mask = np.array([len(neighbors) >= min_neighbors for neighbors in neighbor_counts])
+        if inlier_mask.size != 0:
+            sobelLeft[rows[~inlier_mask], cols[~inlier_mask]] = 0
+        
+        sobelRight = cv2.Sobel(inverse, cv2.CV_8UC1, 1, 0, ksize=5)
+        sobelRight[:, -5:] = 0
+        
+        rows, cols = np.nonzero(sobelRight) #Use scipy to get rid of outliers
+        points = np.column_stack((rows, cols))
+        tree = KDTree(points)
+        neighbor_counts = tree.query_ball_point(points, radius)
+        inlier_mask = np.array([len(neighbors) >= min_neighbors for neighbors in neighbor_counts])
+        if inlier_mask.size != 0:
+            sobelRight[rows[~inlier_mask], cols[~inlier_mask]] = 0
+        
         leftCurve = self.get_bezier_curve(sobelLeft)
         rightCurve = self.get_bezier_curve(sobelRight)
 
@@ -162,8 +183,11 @@ class Curve_fit():
         # Add sobel right as green channel
         sobel[:,:,1] = sobelRight
         
-
+        cv2.namedWindow("sobel", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("sobel", (755,490))
         cv2.imshow("sobel", sobel)
+        cv2.namedWindow("curve", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("curve", (755,490))
         cv2.imshow("curve", curveImage)
 
 

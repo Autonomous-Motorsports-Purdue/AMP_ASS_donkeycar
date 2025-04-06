@@ -28,10 +28,13 @@ class Onnx:
         ll_predict = np.argmax(x1, 1)
 
         drivable = da_predict.astype(np.uint8)[0]*255
+        drivable[500:, :] = 255
         lanes = ll_predict.astype(np.uint8)[0]*255
 
         imgcopy[drivable>100]=[255,0,0]
         imgcopy[lanes>100]=[0,255,0]
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("img", (755, 490))
         cv2.imshow('img', imgcopy)
         cv2.waitKey(1)
 
