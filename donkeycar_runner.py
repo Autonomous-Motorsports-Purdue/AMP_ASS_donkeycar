@@ -2,46 +2,39 @@ import donkeycar as dk
 from donkeycar.parts.controller import LocalWebController
 
 import time
-from parts.health_check import HealthCheck
-from parts.uart import UART_Driver
-from parts.uart_backup import UART_backup_driver
-from constants import DRIVE_LOOP_HZ
-from parts.logger import Logger
-from parts.frame_publisher import Frame_Publisher
-from parts.segment_model import Segment_Model
+from parts.camera import Camera
+from parts.onnx import Onnx
+from parts.process import Process
+from parts.viewer import Viewer
+from parts.undistort import Undistort
+from parts.control_points import Control_points
+from parts.pixel_2_world import Pixel_2_world
+from parts.points_plot import Points_plot
+from parts.video_compiler import Video_compiler
+from Parts2.process_o import Process_o
 
 if __name__ == "__main__":
+    '''
     # web controller
-    V = dk.vehicle.Vehicle()
-    heartbeat= HealthCheck("192.168.1.100", 6000) # aryamaan has ip 100
-    V.add(heartbeat, inputs=[], outputs=["safety/heartbeat"])
-    V.add(Frame_Publisher(), outputs=['sensors/ZED/RGB/left', 'sensors/ZED/RGB/right'], threaded=False)
-    V.add(Segment_Model(), inputs=['sensors/ZED/RGB/left'], outputs=['perception/segmentedTrack', 'centroid','controls/steering', 'controls/throttle'])
-    #V.add(LaneDetect(), inputs=['sensors/ZED/RGB/left', ' ', ' '], outputs=['points', 'perception/segmentedTrack'], threaded=False)
-    V.add(Logger(), inputs=['sensors/ZED/RGB/left', 'perception/segmentedTrack', 'centroid', 'controls/steering', 'controls/throttle'], threaded=False)
+    V = dk.Vehicle()
+    V.mem['img_num'] = 200
+    V.add(Camera(), outputs=['img'])
+    V.add(Onnx(), inputs=['img'], outputs=['lane', 'drive'])
+    #V.add(Process_o(), inputs=['lane', 'drive'], outputs=['sobel', 'curve'])
+    V.add(Process(), inputs=['lane', 'drive'], outputs=['sobel', 'curve'])
+    V.add(Viewer(), inputs=['drive'])
+    V.start(rate_hz=4)
+    '''
+    # web controller
+    V = dk.Vehicle()
+    V.mem['img_num'] = 200
+    V.add(Camera(), outputs=['img'])
+    #V.add(Undistort(),inputs=["img"],outputs=['img'])
+    V.add(Onnx(), inputs=['img'], outputs=['lane', 'drive'])
+    #V.add(Process_o(), inputs=['lane', 'drive'], outputs=['sobel', 'curve'])
+    V.add(Process(), inputs=['lane', 'drive'], outputs=['sobel', 'curve','mid'])
+    V.add(Control_points(),inputs = ['mid'],outputs=['points'])
+    V.add(Points_plot(),inputs=['points']) 
+    V.add(Viewer(), inputs=['drive'])
+    V.start(rate_hz=4)
     
-    controller = LocalWebController()
-    # web controller just expects all these things even though they don't exist
-    V.add(
-        controller,
-        inputs=["perception/segmentedTrack", "tub/num_records", "user/mode", "recording"],
-        outputs=[
-            "user/steering_fake",
-            "user/throttle_fake",
-            "user/mode",
-            "recording",
-            "web/buttons",
-        ],
-        threaded=True,
-    )
-
-    # uart controller
-    uart = UART_backup_driver("/dev/ttyACM0")
-    V.add(
-        uart,
-        inputs=["controls/throttle", "controls/steering", "safety/heartbeat"],
-        outputs=[],
-        threaded=False,
-    )
-
-    V.start(rate_hz=DRIVE_LOOP_HZ)
