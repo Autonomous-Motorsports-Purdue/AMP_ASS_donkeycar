@@ -120,7 +120,7 @@ class Segment_Model():
                     throttle=-0.0599*math.log(0.0211*abs(scaled_offset_x)) 
                 
                 # Update the PID setpoint to the current scaled offset TODO make this more descriptive, I don't really understand it
-                self.pid.setpoint = scaled_offset_x 
+                self.pid.setpoint = scaled_offset_x
                 
                 print(f"Bounding box center X: {bounding_center_x}")
                 print(f"Contour center X: {contour_center_x}")

@@ -4,12 +4,8 @@ class Pure_Pursuit():
         self.wheelbase = wheelbase 
         self.speed = 50
 
-
-    #def line_to_position(target_line):
-
-
-    def run(self, target):
-        targetx, targety = target 
+    def run(self, target_position):
+        targetx, targety = target_position 
         yaw = 0
 
         #if(velocity == 0):
