@@ -9,5 +9,5 @@ class Camera():
             self.img_num = 1
         file_name = file_name = "./images/img (" + str(self.img_num) + ").jpg"
         img = cv2.imread(file_name)
-        print(self.img_num)
+        #print(self.img_num)
         return img

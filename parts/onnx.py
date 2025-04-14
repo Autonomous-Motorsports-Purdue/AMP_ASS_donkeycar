@@ -6,7 +6,7 @@ class Onnx:
     def __init__(self):
         self.sess = rt.InferenceSession(
             "./model.onnx",
-            providers=[('CUDAExecutionProvider', {"cudnn_conv_algo_search": "DEFAULT"})])
+            providers=[('CUDAExecutionProvider', {"cudnn_conv_algo_search": "EXHAUSTIVE"})])
         print('model loaded')
 
     def run(self, img):

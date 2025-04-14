@@ -1,7 +1,9 @@
 import numpy as np
 import cv2
 from math import factorial
-from scipy.spatial import KDTree
+from scipy.spatial import KDTree, distance_matrix
+from scipy.sparse.csgraph import minimum_spanning_tree, connected_components
+from scipy.sparse import csr_matrix
 
 class Curve_fit():
     def __init__(self):
@@ -106,6 +108,42 @@ class Curve_fit():
         Returns the combination of n choose k.
         """
         return factorial(n) / factorial(k) / factorial(n - k)
+
+    def mst_clustering_largest_component(self, binary_image, distance_threshold=10):
+        # Step 1: Extract coordinates of foreground pixels
+        points = np.column_stack(np.nonzero(binary_image))
+        
+        if len(points) == 0:
+            return np.zeros_like(binary_image, dtype=bool)  # empty image
+
+        # Step 2: Compute distance matrix
+        dist_matrix = distance_matrix(points, points)
+
+        # Step 3: Compute MST
+        mst = minimum_spanning_tree(dist_matrix)
+
+        # Step 4: Convert MST to a graph and cut edges longer than threshold
+        mst = mst.toarray()
+        mst[mst > distance_threshold] = 0  # cut long edges
+
+        # Step 5: Use connected components on the modified MST
+        graph = csr_matrix((mst + mst.T) > 0)  # symmetrize
+        n_components, labels = connected_components(graph)
+
+        # Step 6: Find largest cluster
+        unique, counts = np.unique(labels, return_counts=True)
+        largest_cluster_label = unique[np.argmax(counts)]
+
+        # Step 7: Mask the original image
+        mask = labels == largest_cluster_label
+        largest_cluster_coords = points[mask]
+
+        # Step 8: Create output image
+        output_image = np.zeros_like(binary_image, dtype=bool)
+        output_image[largest_cluster_coords[:, 0], largest_cluster_coords[:, 1]] = True
+
+        return output_image
+
     
     def track(self, img):
         kernel5 = np.ones((5,5),np.uint8)
@@ -135,38 +173,67 @@ class Curve_fit():
         img = cv2.bitwise_and(img, mask)
 
         mask = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel3, iterations = 3)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel3, iterations = 3)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel5, iterations = 3)
         mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel3, iterations = 2)
 
-        img = cv2.bitwise_and(img, mask)
+        #img = cv2.bitwise_and(img, mask)
+        img = mask
+
+        sobelLeft = cv2.Sobel(img, cv2.CV_8UC1, 1, 0, ksize=1)
+        sobelLeft[:, :2] = 0
+        left_cluster = self.mst_clustering_largest_component(sobelLeft, 75)
+
+        # radius = 30
+        # min_neighbors = 30
+        
+        # rows, cols = np.nonzero(sobelLeft) #Use scipy to get rid of outliers
+        # points = np.column_stack((rows, cols))
+        # tree = KDTree(points)
+        # neighbor_counts = tree.query_ball_point(points, radius)
+        # inlier_mask = np.array([len(neighbors) >= min_neighbors for neighbors in neighbor_counts])
+        # if inlier_mask.size != 0:
+        #     sobelLeft[rows[~inlier_mask], cols[~inlier_mask]] = 0
 
         inverse = cv2.bitwise_not(img)
-        sobelLeft = cv2.Sobel(img, cv2.CV_8UC1, 1, 0, ksize=5)
+        sobelRight = cv2.Sobel(inverse, cv2.CV_8UC1, 1, 0, ksize=1)
+        sobelRight[:, -2:] = 0
+        right_cluster = self.mst_clustering_largest_component(sobelRight, 75)
+        # clustered = clustered.astype(np.uint8) * 255
 
-        radius = 30
-        min_neighbors = 30
+        # difference = cv2.absdiff(sobelRight, clustered)
+        # difference = cv2.dilate(difference, kernel3, iterations = 1)
+
+        # clustered = cv2.dilate(clustered, kernel3, iterations = 1)
         
-        rows, cols = np.nonzero(sobelLeft) #Use scipy to get rid of outliers
-        points = np.column_stack((rows, cols))
-        tree = KDTree(points)
-        neighbor_counts = tree.query_ball_point(points, radius)
-        inlier_mask = np.array([len(neighbors) >= min_neighbors for neighbors in neighbor_counts])
-        if inlier_mask.size != 0:
-            sobelLeft[rows[~inlier_mask], cols[~inlier_mask]] = 0
+        # # Turn clusterd into an rgb image with difference as red channel
+        # clustered = cv2.cvtColor(clustered, cv2.COLOR_GRAY2BGR)
         
-        sobelRight = cv2.Sobel(inverse, cv2.CV_8UC1, 1, 0, ksize=5)
-        sobelRight[:, -5:] = 0
+        # clustered[:,:,0] = difference
+
+
+
+
+        # cv2.imshow("clustered", clustered)
+
         
-        rows, cols = np.nonzero(sobelRight) #Use scipy to get rid of outliers
-        points = np.column_stack((rows, cols))
-        tree = KDTree(points)
-        neighbor_counts = tree.query_ball_point(points, radius)
-        inlier_mask = np.array([len(neighbors) >= min_neighbors for neighbors in neighbor_counts])
-        if inlier_mask.size != 0:
-            sobelRight[rows[~inlier_mask], cols[~inlier_mask]] = 0
+        # rows, cols = np.nonzero(sobelRight) #Use scipy to get rid of outliers
+        # points = np.column_stack((rows, cols))
+        # tree = KDTree(points)
+        # neighbor_counts = tree.query_ball_point(points, radius)
+        # inlier_mask = np.array([len(neighbors) >= min_neighbors for neighbors in neighbor_counts])
+        # if inlier_mask.size != 0:
+        #     sobelRight[rows[~inlier_mask], cols[~inlier_mask]] = 0
         
         leftCurve = self.get_bezier_curve(sobelLeft)
         rightCurve = self.get_bezier_curve(sobelRight)
+
+        cluster_curve_left = self.get_bezier_curve(left_cluster)
+        cluster_curve_right = self.get_bezier_curve(right_cluster)
+
+        cluster_curve_image =np.zeros((img.shape[0], img.shape[1], 3), np.uint8)
+        cv2.polylines(cluster_curve_image, [np.int32(cluster_curve_left)], isClosed=False, color=(255,0,0), thickness=2)
+        cv2.polylines(cluster_curve_image, [np.int32(cluster_curve_right)], isClosed=False, color=(0,255,0), thickness=2)
+        cv2.imshow("cluster_curve", cluster_curve_image)
 
         mid = (leftCurve + rightCurve) / 2
 
@@ -182,12 +249,7 @@ class Curve_fit():
         sobel[:,:,0] = sobelLeft
         # Add sobel right as green channel
         sobel[:,:,1] = sobelRight
-        
-        cv2.namedWindow("sobel", cv2.WINDOW_NORMAL)
-        cv2.resizeWindow("sobel", (755,490))
         cv2.imshow("sobel", sobel)
-        cv2.namedWindow("curve", cv2.WINDOW_NORMAL)
-        cv2.resizeWindow("curve", (755,490))
         cv2.imshow("curve", curveImage)
 
 
