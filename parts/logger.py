@@ -37,8 +37,8 @@ class Logger():
             segmented_file = self.segmented_directory + "/" + timestamp + ".jpg"            
 
             # Save the images if written is successful
-            success_image = cv2.imwrite(image_file, image)
-            success_segmented = cv2.imwrite(segmented_file, segmentedImage)
+            success_image = cv2.imwrite(image_file, image.copy())
+            success_segmented = cv2.imwrite(segmented_file, segmentedImage.copy())
             if success_image and success_segmented:
                 rows = [timestamp, image_file, segmented_file, centroid, steering, throttle]    
                 self.csvwriter.writerow(rows)

@@ -9,6 +9,7 @@ class UART_backup_driver:
 
         self.curr_v = 0
         self.curr_s = 0
+        self._iter = 0 # iteration counter. used to delay start.
 
     def update_velocity(
         self, new_v: int
@@ -51,13 +52,18 @@ class UART_backup_driver:
         Donkeycar compatible run function
         DOnkeycar gives (-1, 1) for steering and (-1, 1) for throttle
         """
+        print(f"T:{v}, S:{s}")
         if not alive:
             self.reset_kart()
             return
+        if self._iter < 5:
+            print("warming up kart -- not moving")
+            self.reset_kart()
+        self._iter += 1 # increment iteration. 
         v = int(v * 255)  # throttle from -127 to 127
 
         # steering is centered at 128
-        s = int(s * 127)
+        s = int(s * 64)
 
         # clip throttle to (-100, 100)
         v = max(-200, min(200, v))
@@ -66,6 +72,8 @@ class UART_backup_driver:
 
         self.update_velocity(v)
         self.update_steering(s)
+        print(f"New steering: {self.curr_s}")
+
         self.write_serial()
 
     def shutdown(self):

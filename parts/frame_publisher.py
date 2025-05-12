@@ -43,5 +43,17 @@ class Frame_Publisher():
             right_half = self.frame[:, width // 2:]
             # left_half = self.grab_middle_section(left_half, 0.9, 0.9)
             # right_half = self.grab_middle_section(right_half, 0.9, 0.9)
-            print("left_half: ", left_half.shape)
             return np.array(left_half), np.array(right_half)
+        
+    def remove_green(self, img, green_factor, min_green):
+        arr = img.astype(np.float32)
+        R = arr[..., 0]
+        G = arr[..., 1]
+        B = arr[..., 2]
+
+        avg_RB = (R + B) / 2.0
+        mask = (G > min_green) & (G > green_factor * avg_RB)
+        # Broadcast white color to all masked pixels
+        arr[mask] = [255.0, 255.0, 255.0]
+
+        return arr.astype(np.uint8)

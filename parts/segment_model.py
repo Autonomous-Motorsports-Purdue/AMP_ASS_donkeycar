@@ -4,6 +4,7 @@ import onnxruntime as rt
 from simple_pid import PID
 import math
 from constants import *
+from copy import deepcopy
 
 class Segment_Model():
         def __init__(self):
@@ -26,10 +27,12 @@ class Segment_Model():
                 throttle (float): Calcualted throttle based on the offset of the current centroid value
             """
 
-            print(f"begin proc")
+            #print(f"begin proc")
             #st = time.time()
             img = cv2.resize(img, (640,360))
             img_rs=img.copy()
+            
+            
 
             img = img[:, :, ::-1].transpose(2, 0, 1)
             img = np.ascontiguousarray(img)
@@ -58,7 +61,7 @@ class Segment_Model():
             img_rs[DA>100]=[255,0,0]
             img_rs[LL>100]=[0,255,0]
             #print(f"Processed image in: {end-st}")
-
+            return LL, DA
             # Crop image to 60% of the original height in the middle half of the image
             img_rs = img_rs[: (60*height) // 100, width//4:width*3//4]
             crop_h = 60*height // 100
@@ -133,3 +136,4 @@ class Segment_Model():
             steering = self.pid(self.prev_steer)
             
             return img_rs, (contour_center_x,contour_center_y), steering, throttle
+
