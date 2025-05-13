@@ -8,7 +8,7 @@ from copy import deepcopy
 
 class Segment_Model():
         def __init__(self):
-            self.sess = rt.InferenceSession( "q_model.onnx", providers=[('CUDAExecutionProvider', {"cudnn_conv_algo_search": "DEFAULT"})])
+            self.sess = rt.InferenceSession( "model_proc.static_int8.onnx", providers=[('CUDAExecutionProvider', {"cudnn_conv_algo_search": "DEFAULT"})])
             self.pid = PID(K_P, 0.00, 0, setpoint=0)
             self.prev_steer = 0
             print('model loaded')
@@ -29,7 +29,9 @@ class Segment_Model():
 
             #print(f"begin proc")
             #st = time.time()
-            img = cv2.resize(img, (640,360))
+            img = cv2.resize(img, (640, 360))
+            # cut 4 pixels off each left and right side & reshape array to be 352x640x3
+            img = img[4:-4, :, :]
             img_rs=img.copy()
             
             
@@ -41,7 +43,7 @@ class Segment_Model():
             img=img / 255.0
 
             # Run segmentation model on inputted image
-            img_out = self.sess.run(None, {'input.1': img})
+            img_out = self.sess.run(None, {'input': img})
 
             #end = time.time()
 

@@ -62,18 +62,18 @@ class Curve_fit():
     def ransac(self, image, left):
         ys, xs = np.nonzero(image)
         points = np.column_stack([xs, ys])  # or [ys, xs], be consistent in fit/evaluate
-        if len(points) < 5:
+        if len(points) < 7:
             print("Not enough points to fit a curve")
             return np.zeros_like(image, dtype=np.uint8)
         # 2. run RANSAC
         # seed is lowest point in the image
         seed = points[np.argmin(points[:, 1])]
         # if there are no points in the left quarter of the image and left is True, return empty image
-        if left and np.sum(points[:, 0] < image.shape[1] * 3 // 4) == 0:
+        if left and np.sum(points[:, 0] < image.shape[1] * 5 // 6) == 0:
             print("No points in left quarter of the image")
             return np.zeros_like(image, dtype=np.uint8)
         # if there are no points in the right quarter of the image and left is False, return empty image
-        if not left and np.sum(points[:, 0] > image.shape[1] // 4) == 0:
+        if not left and np.sum(points[:, 0] > image.shape[1] // 6) == 0:
             print("No points in right quarter of the image")
             return np.zeros_like(image, dtype=np.uint8) 
         
@@ -118,16 +118,26 @@ class Curve_fit():
         # Get the waypoints from the mid bezier curve
         # select the middle point, if not below horizon line, then go down one and select again until below horizon line
         select = 1 * len(mid) // 2 
-        point = mid[select]
-        while point[1] > 380:
+        top = mid[select]
+        while top[1] > 380:
             select += 1
-            point = mid[select]
+            top = mid[select]
             if select >= 39:
                 return mid[39]
-        return point
+        return top
+        bottom = mid[1 * len(mid) // 2]
+        # take whichever has the more extreme x deviation
+        center_x = 320
+        diff_bot = (center_x - bottom[0])**2
+        diff_top = (center_x - top[0])**2
+        if diff_bot > diff_top:
+            return bottom
+        return top
         
 
     def track(self, img):
+        # set top 50 pixels to black
+        img[0:50,:] = 0
         kernel5 = np.ones((5,5),np.uint8)
         kernel3 = np.ones((3,3),np.uint8)
         # erode = cv2.erode(img, kernel5, iterations = 5)
@@ -149,6 +159,13 @@ class Curve_fit():
 
         # Draw the largest contour
         x,y,w,h = cv2.boundingRect(c)
+        M = cv2.moments(c)
+        if M["m00"] != 0:  # To avoid division by zero
+            contour_center_x = M["m10"] / M["m00"]
+            contour_center_y = M["m01"] / M["m00"]
+        else:
+            contour_center_x = contour_center_y = 0
+         
         rect = np.intp(cv2.boxPoints(cv2.minAreaRect(c)))
         mask = np.zeros_like(img)
         cv2.drawContours(mask, [rect], -1, (255), -1)
@@ -213,6 +230,8 @@ class Curve_fit():
         cluster_mid = (cluster_curve_left + cluster_curve_right) / 2
         cv2.polylines(cluster_curve_image, [np.int32(cluster_mid)], isClosed=False, color=(0,0,255), thickness=2)
         waypoint = self.get_waypoints(cluster_mid)
+        # draw centroid on image
+        cv2.circle(cluster_curve_image, (int(contour_center_x), int(contour_center_y)), 5, (155, 0, 255), -1)
         # Draw the waypoint on the curve image
         cv2.circle(cluster_curve_image, (int(waypoint[0]), int(waypoint[1])), 5, (0,255,255), -1)
         #draw horizon line

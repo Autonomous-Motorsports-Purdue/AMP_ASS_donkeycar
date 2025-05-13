@@ -3,10 +3,14 @@ class Pure_Pursuit():
     def __init__(self, speed):
         self.wheelbase = 1.000506 
         self.speed = speed
+        self.speed_fast = 0.45
+        self.speed_prev = self.speed_fast
 
     def run(self, target_position):
         targetx, targety, _ = target_position 
         targety = -targety
+        targetx += 0.6096 #Back wheels to camera
+        targetx *= 0.75 # Constant for urgency
         print(f"{targetx}, {targety}")
         #targetx, targety = 3, -2.5 
         # we move forward in x 
@@ -35,8 +39,8 @@ class Pure_Pursuit():
         else:
             steering_value = steering_theta / 22.096
         '''
-        #steering_value = steering_theta /18.523 
-        steering_value = steering_theta /15.523 
+        steering_value = steering_theta / 18.523 
+        #steering_value = steering_theta /15.523 
 
         print(f"Sterring theta: {steering_theta}\tSteering value: {steering_value}")
         #steering_value = math.atan((2*self.wheelbase*math.sin(alpha)/self.kv * velocity)); # Steering angle with velocity
@@ -44,4 +48,13 @@ class Pure_Pursuit():
         #currently returns angle in degrees. Need to convert from degrees to arbitrary steering value,
         #0-255
 
-        return steering_value, self.speed
+        # speed control!
+        if abs(steering_theta) < 3.0: # if absolute value of steering less than 1.0
+            ret_speed = self.speed_fast * 0.5 + 0.5 * self.speed_prev
+        else:
+            ret_speed = self.speed
+
+        self.speed_prev = ret_speed
+        ret_speed = self.speed
+
+        return steering_value, ret_speed

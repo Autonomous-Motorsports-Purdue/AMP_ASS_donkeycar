@@ -30,7 +30,7 @@ if __name__ == "__main__":
     V.add(Curve_fit(), inputs=['lane', 'drive'], outputs=['waypoint', 'lines'])
     V.add(translate, inputs=['waypoint'], outputs=['world'])
 
-    V.add(Pure_Pursuit(0.325), inputs=["world"], outputs=["controls/auto_steering","controls/auto_throttle"])
+    V.add(Pure_Pursuit(0.3), inputs=["world"], outputs=["controls/auto_steering","controls/auto_throttle"])
     
     
     controller = LocalWebController()
