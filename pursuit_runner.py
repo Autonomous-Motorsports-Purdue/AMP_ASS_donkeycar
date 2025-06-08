@@ -22,7 +22,7 @@ if __name__ == "__main__":
         b = pickle.load(f)
     
     translate = Translate(b, 0.99695, -5.25)
-    heartbeat= HealthCheck("192.168.1.100", 6000) # aryamaan has ip 100
+    heartbeat= HealthCheck("192.168.12.25", 6000) # aryamaan has ip 100
     V.add(heartbeat, inputs=[], outputs=["safety/heartbeat"])
     V.add(Frame_Publisher(), outputs=['sensors/ZED/RGB/left', 'sensors/ZED/RGB/right'], threaded=False)
     V.add(Segment_Model(), inputs=['sensors/ZED/RGB/left'], outputs=['lane', 'drive'])

@@ -7,7 +7,7 @@ class Control_Muxer:
             return auto_steer, auto_throt
         if user_steer != 0 or user_throt != 0:
             print(f"USER CONTROL: {user_steer}, {user_throt}")
-            return user_steer, user_throt
+            return user_steer, user_throt * .7
         else:
             return auto_steer, auto_throt
 

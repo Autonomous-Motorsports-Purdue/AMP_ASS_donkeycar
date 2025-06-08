@@ -56,7 +56,7 @@ class UART_backup_driver:
         if not alive:
             self.reset_kart()
             return
-        if self._iter < 5:
+        if self._iter < 10:
             print("warming up kart -- not moving")
             self.reset_kart()
         self._iter += 1 # increment iteration. 
